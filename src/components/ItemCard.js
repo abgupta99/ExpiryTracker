@@ -3,6 +3,7 @@ import {
   View,
   Text,
   TouchableWithoutFeedback,
+  TouchableOpacity,
   Animated,
   StyleSheet,
 } from 'react-native';
@@ -13,7 +14,17 @@ export default function ItemCard({ item, onPress, onLongPress }) {
   const scale = useRef(new Animated.Value(1)).current;
   const daysLeft = daysUntilExpiry(item.expiryDate);
 
-  const accent = daysLeft < 3 ? theme.colors.danger : daysLeft < 7 ? theme.colors.warn : theme.colors.success;
+  const isExpired = (() => {
+    try {
+      const d = typeof item.expiryDate === 'string' ? new Date(item.expiryDate) : item.expiryDate;
+      return d && d < new Date();
+    } catch (e) {
+      return false;
+    }
+  })();
+
+  const accent = isExpired ? theme.colors.danger : daysLeft < 3 ? theme.colors.warn : theme.colors.success;
+  const statusText = isExpired ? 'Expired' : daysLeft < 3 ? 'Use soon' : 'Good';
 
   const handlePressIn = () => {
     Animated.spring(scale, { toValue: 0.98, useNativeDriver: true, speed: 50 }).start();
@@ -21,6 +32,18 @@ export default function ItemCard({ item, onPress, onLongPress }) {
   const handlePressOut = () => {
     Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 50 }).start();
   };
+
+  const categoryMap = {
+    'Packed Food': { color: '#f97316', label: '🍱' },
+    Meat: { color: '#ef4444', label: '🍖' },
+    Vegetable: { color: '#16a34a', label: '🥬' },
+    Fruit: { color: '#f43f5e', label: '�' },
+    Drinks: { color: '#0ea5e9', label: '🥤' },
+    Medicine: { color: '#06b6d4', label: '💊' },
+    Dairy: { color: '#8b5cf6', label: '�' },
+    Other: { color: '#64748b', label: '✨' },
+  };
+  const cat = categoryMap[item.category] || categoryMap.Other;
 
   return (
     <TouchableWithoutFeedback
@@ -31,12 +54,31 @@ export default function ItemCard({ item, onPress, onLongPress }) {
     >
       <Animated.View style={[styles.card, { transform: [{ scale }] }]}>
         <View style={[styles.accent, { backgroundColor: accent }]} />
+        <View style={[styles.catIconWrap]}> 
+          <View style={[styles.catIcon, { backgroundColor: cat.color }]}> 
+            <Text style={styles.catIconText}>{cat.label}</Text>
+          </View>
+        </View>
         <View style={styles.content}>
-          <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
-            {item.name}
-          </Text>
+          <View style={styles.headerRow}>
+            <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
+              {item.name}
+            </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={[styles.badge, { backgroundColor: accent }]}>
+                  <Text style={styles.badgeText}>{statusText}</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => onPress && onPress(item)}
+                  style={styles.iconButton}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.iconText}>›</Text>
+                </TouchableOpacity>
+              </View>
+          </View>
           <Text style={styles.meta}>
-            Expires on {item.expiryDate} • {daysLeft} day{daysLeft === 1 ? '' : 's'}
+            Expiring in {daysLeft} day{daysLeft === 1 ? '' : 's'}
           </Text>
         </View>
       </Animated.View>
@@ -60,6 +102,24 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: theme.spacing.s,
   },
+  catIconWrap: { justifyContent: 'center', paddingHorizontal: theme.spacing.s },
+  catIcon: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
+  catIconText: { fontSize: 20 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   name: { fontSize: theme.typography.body, fontWeight: '700', color: theme.colors.text },
   meta: { marginTop: 6, color: theme.colors.muted, fontSize: theme.typography.small },
+  badge: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: theme.radii.round,
+    alignSelf: 'flex-start',
+  },
+  badgeText: { color: '#fff', fontWeight: '700', fontSize: 12 },
+  iconButton: {
+    marginLeft: theme.spacing.s,
+    backgroundColor: 'transparent',
+    paddingHorizontal: theme.spacing.xs,
+    paddingVertical: theme.spacing.xs,
+  },
+  iconText: { color: theme.colors.muted, fontSize: 20, fontWeight: '700' },
 });

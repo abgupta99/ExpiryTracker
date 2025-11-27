@@ -44,6 +44,13 @@ export default function ItemDetailScreen({ route, navigation }) {
           <Text style={styles.value}>{item.category || '—'}</Text>
         </View>
 
+        {item.location ? (
+          <View style={styles.row}>
+            <Text style={styles.label}>Location</Text>
+            <Text style={styles.value}>{item.location}</Text>
+          </View>
+        ) : null}
+
         <View style={styles.row}>
           <Text style={styles.label}>Quantity</Text>
           <Text style={styles.value}>{item.quantity ?? '—'}</Text>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, TextInput, Button, Alert, Platform, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import theme from '../styles/theme';
 import { addItem } from '../database/queries';
+import categories from '../config/categories';
 import { scheduleReminders } from '../services/notificationService';
 import { formatDate } from '../utils/dateUtils';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -26,6 +27,7 @@ export default function AddItemScreen({ navigation, route }) {
   const [expiryDate, setExpiryDate] = useState(defaultExpiry());
   const [showPicker, setShowPicker] = useState(false);
   const [category, setCategory] = useState('Other');
+  const [location, setLocation] = useState('');
 
   useEffect(() => {
     const preset = route?.params?.presetCategory;
@@ -39,7 +41,7 @@ export default function AddItemScreen({ navigation, route }) {
       return;
     }
     console.log('in ADD');
-  addItem({ name: trimmed, expiryDate, category, quantity: 1, notes: '', reminderDays: 3 }, (insertId) => {
+  addItem({ name: trimmed, expiryDate, category, quantity: 1, notes: '', reminderDays: 3, location }, (insertId) => {
       console.log('addItem callback, insertId=', insertId);
       if (!insertId) {
         console.log('in add item error');
@@ -92,26 +94,35 @@ export default function AddItemScreen({ navigation, route }) {
       {Picker ? (
         <View style={styles.pickerWrap}>
           <Picker selectedValue={category} onValueChange={(v) => setCategory(v)}>
-            <Picker.Item label="Food" value="Food" />
-            <Picker.Item label="Medicine" value="Medicine" />
-            <Picker.Item label="Dairy" value="Dairy" />
-            <Picker.Item label="Other" value="Other" />
+            {categories.map((c) => (
+              <Picker.Item key={c.value} label={`${c.icon} ${c.label}`} value={c.value} />
+            ))}
           </Picker>
         </View>
       ) : (
-        <View style={styles.row}>{['Food', 'Medicine', 'Dairy', 'Other'].map((c) => (
+        <View style={styles.row}>{categories.map((c) => (
           <TouchableOpacity
-            key={c}
-            onPress={() => setCategory(c)}
+            key={c.value}
+            onPress={() => setCategory(c.value)}
             style={[
               styles.chip,
-              { borderColor: category === c ? theme.colors.primary : theme.colors.border },
+              { borderColor: category === c.value ? theme.colors.primary : theme.colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
             ]}
           >
-            <Text style={{ color: category === c ? theme.colors.primary : theme.colors.text }}>{c}</Text>
+            <Text style={{ marginRight: 6 }}>{c.icon}</Text>
+            <Text style={{ color: category === c.value ? theme.colors.primary : theme.colors.text }}>{c.label}</Text>
           </TouchableOpacity>
         ))}</View>
       )}
+
+      {/* Location */}
+      <TextInput
+        placeholder="Location (e.g. Fridge, Shelf)"
+        value={location}
+        onChangeText={setLocation}
+        style={[styles.input, { marginTop: theme.spacing.s }]}
+        placeholderTextColor={theme.colors.muted}
+      />
 
       <View style={{ marginTop: theme.spacing.m }}>
         <Button title="Save" onPress={handleAdd} color={theme.colors.primary} />
