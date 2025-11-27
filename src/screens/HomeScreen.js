@@ -8,7 +8,10 @@ import {
   ActivityIndicator,
   Alert,
   StyleSheet,
+  TouchableOpacity,
+  Platform,
 } from 'react-native';
+import theme from '../styles/theme';
 import { getExpiringItems, deleteItem } from '../database/queries';
 import ItemCard from '../components/ItemCard';
 import { useIsFocused } from '@react-navigation/native';
@@ -81,33 +84,48 @@ export default function HomeScreen({ navigation }) {
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.headerRow}>
-        <Text style={styles.title}>Expiring Soon</Text>
-        <View style={styles.headerButtons}>
-          <Button title="Add" onPress={() => navigation.navigate('AddItem')} />
+    <View style={styles.appWrap}>
+      <View style={styles.hero}>
+        <Text style={styles.heroTitle}>Expiry Tracker</Text>
+        <Text style={styles.heroSubtitle}>Items expiring soon</Text>
+        <View style={styles.heroActions}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('AddItem')}
+            style={styles.addButton}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.addButtonText}>+ Add</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" />
-        </View>
-      ) : items && items.length > 0 ? (
-        <FlatList
-          data={items}
-          renderItem={renderItem}
-          keyExtractor={(i, idx) => (i.id ? String(i.id) : `item-${idx}`)}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-          contentContainerStyle={{ paddingBottom: 24 }}
-        />
-      ) : (
-        <View style={styles.empty}>
-          <Text style={styles.emptyText}>No items expiring in the next 7 days.</Text>
-          <View style={{ height: 12 }} />
-          <Button title="Add your first item" onPress={() => navigation.navigate('AddItem')} />
-        </View>
-      )}
+      <View style={styles.content}>
+        {loading ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color="#2b6cb0" />
+          </View>
+        ) : items && items.length > 0 ? (
+          <FlatList
+            data={items}
+            renderItem={renderItem}
+            keyExtractor={(i, idx) => (i.id ? String(i.id) : `item-${idx}`)}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            contentContainerStyle={styles.listContainer}
+          />
+        ) : (
+          <View style={styles.empty}>
+            <Text style={styles.emptyText}>No items expiring in the next 7 days.</Text>
+            <View style={{ height: 12 }} />
+            <TouchableOpacity
+              onPress={() => navigation.navigate('AddItem')}
+              style={styles.ghostButton}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.ghostButtonText}>Add your first item</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
 
       <View style={styles.footerRow}>
         <Button title="Scan" onPress={() => navigation.navigate('Scan')} />
@@ -118,12 +136,42 @@ export default function HomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  title: { fontSize: 18, fontWeight: '600' },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  headerButtons: { flexDirection: 'row', gap: 8 },
+  appWrap: {
+    flex: 1,
+    backgroundColor: '#f6fbff',
+  },
+  hero: {
+    paddingTop: Platform.OS === 'ios' ? 60 : 36,
+    paddingBottom: theme.spacing.m,
+    paddingHorizontal: theme.spacing.m,
+    backgroundColor: theme.colors.primary,
+    borderBottomLeftRadius: theme.radii.lg,
+    borderBottomRightRadius: theme.radii.lg,
+    ...theme.shadow.card,
+  },
+  heroTitle: { color: '#fff', fontSize: theme.typography.h1, fontWeight: '700' },
+  heroSubtitle: { color: theme.colors.primarySoft, marginTop: 6, fontSize: theme.typography.small },
+  heroActions: { marginTop: theme.spacing.s, flexDirection: 'row', justifyContent: 'flex-end' },
+  addButton: {
+    backgroundColor: theme.colors.surface,
+    paddingVertical: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.m,
+    borderRadius: theme.radii.md,
+    ...theme.shadow.card,
+  },
+  addButtonText: { color: theme.colors.primary, fontWeight: '700' },
+  content: { flex: 1, paddingHorizontal: theme.spacing.m, paddingTop: theme.spacing.s },
+  listContainer: { paddingBottom: 40 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  empty: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  emptyText: { color: '#666' },
+  empty: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 40 },
+  emptyText: { color: theme.colors.muted, fontSize: theme.typography.body },
+  ghostButton: {
+    borderWidth: 1,
+    borderColor: theme.colors.primaryLight,
+    paddingVertical: theme.spacing.s,
+    paddingHorizontal: theme.spacing.m,
+    borderRadius: theme.radii.md,
+  },
+  ghostButtonText: { color: theme.colors.text },
   footerRow: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 12 },
 });

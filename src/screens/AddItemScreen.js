@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, Button, Alert, Platform, Text, TouchableOpacity } from 'react-native';
+import { View, TextInput, Button, Alert, Platform, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import theme from '../styles/theme';
 import { addItem } from '../database/queries';
 import { scheduleReminders } from '../services/notificationService';
 import { formatDate } from '../utils/dateUtils';
@@ -51,14 +52,27 @@ export default function AddItemScreen({ navigation, route }) {
   };
 
   return (
-    <View style={{ flex: 1, padding: 16 }}>
-      <TextInput placeholder="Name" value={name} onChangeText={setName} style={{ borderWidth: 1, padding: 8, marginBottom: 8 }} />
+    <View style={styles.container}>
+      <TextInput
+        placeholder="Name"
+        value={name}
+        onChangeText={setName}
+        style={styles.input}
+        placeholderTextColor={theme.colors.muted}
+      />
+
       {Platform.OS === 'web' ? (
-        <TextInput placeholder="Expiry YYYY-MM-DD" value={expiryDate} onChangeText={setExpiryDate} style={{ borderWidth: 1, padding: 8, marginBottom: 8 }} />
+        <TextInput
+          placeholder="Expiry YYYY-MM-DD"
+          value={expiryDate}
+          onChangeText={setExpiryDate}
+          style={styles.input}
+          placeholderTextColor={theme.colors.muted}
+        />
       ) : (
         <>
-          <TouchableOpacity onPress={() => setShowPicker(true)} style={{ padding: 12, borderWidth: 1, marginBottom: 8 }}>
-            <Text>Expiry: {expiryDate}</Text>
+          <TouchableOpacity onPress={() => setShowPicker(true)} style={styles.inputButton}>
+            <Text style={styles.inputButtonText}>Expiry: {expiryDate}</Text>
           </TouchableOpacity>
           {showPicker && (
             <DateTimePicker
@@ -73,9 +87,10 @@ export default function AddItemScreen({ navigation, route }) {
           )}
         </>
       )}
+
       {/* Category selector */}
       {Picker ? (
-        <View style={{ borderWidth: 1, borderColor: '#ddd', borderRadius: 6, marginBottom: 8 }}>
+        <View style={styles.pickerWrap}>
           <Picker selectedValue={category} onValueChange={(v) => setCategory(v)}>
             <Picker.Item label="Food" value="Food" />
             <Picker.Item label="Medicine" value="Medicine" />
@@ -84,15 +99,48 @@ export default function AddItemScreen({ navigation, route }) {
           </Picker>
         </View>
       ) : (
-        <View style={{ flexDirection: 'row', marginBottom: 8, justifyContent: 'space-between' }}>
-          {['Food', 'Medicine', 'Dairy', 'Other'].map((c) => (
-            <TouchableOpacity key={c} onPress={() => setCategory(c)} style={{ padding: 8, borderWidth: 1, borderColor: category === c ? '#007aff' : '#ddd', borderRadius: 6 }}>
-              <Text style={{ color: category === c ? '#007aff' : '#000' }}>{c}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <View style={styles.row}>{['Food', 'Medicine', 'Dairy', 'Other'].map((c) => (
+          <TouchableOpacity
+            key={c}
+            onPress={() => setCategory(c)}
+            style={[
+              styles.chip,
+              { borderColor: category === c ? theme.colors.primary : theme.colors.border },
+            ]}
+          >
+            <Text style={{ color: category === c ? theme.colors.primary : theme.colors.text }}>{c}</Text>
+          </TouchableOpacity>
+        ))}</View>
       )}
-      <Button title="Save" onPress={handleAdd} />
+
+      <View style={{ marginTop: theme.spacing.m }}>
+        <Button title="Save" onPress={handleAdd} color={theme.colors.primary} />
+      </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: theme.spacing.m, backgroundColor: theme.colors.background },
+  input: {
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    padding: theme.spacing.s,
+    marginBottom: theme.spacing.s,
+    borderRadius: theme.radii.sm,
+    backgroundColor: theme.colors.surface,
+    color: theme.colors.text,
+  },
+  inputButton: {
+    padding: theme.spacing.s,
+    marginBottom: theme.spacing.s,
+    borderRadius: theme.radii.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+  },
+  inputButtonText: { color: theme.colors.text },
+  pickerWrap: { borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radii.sm, marginBottom: theme.spacing.s, backgroundColor: theme.colors.surface },
+  row: { flexDirection: 'row', marginBottom: theme.spacing.s, justifyContent: 'space-between' },
+  chip: { padding: theme.spacing.xs, borderWidth: 1, borderRadius: theme.radii.sm, flex: 1, marginHorizontal: 4, alignItems: 'center' },
+});
